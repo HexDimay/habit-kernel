@@ -1,4 +1,5 @@
 [workspace]
+members = ["crates/habit-kernel-core"]
 
 [workspace.package]
 edition = "2024"

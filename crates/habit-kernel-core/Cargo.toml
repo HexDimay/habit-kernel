@@ -1,0 +1,10 @@
+[package]
+name = "habit-kernel-core"
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+readme.workspace = true
+version.workspace = true
+
+[dependencies]
