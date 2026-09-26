@@ -38,7 +38,6 @@ impl DataBase {
         Ok(Some(serde_json::from_str(&s)?))
     }
 
-    /// Вызыввается только после первичной загрузки `load()`.
     pub fn update(&mut self) -> anyhow::Result<()> {
         let mut old_hasher = DefaultHasher::new();
         let mut current_hasher = DefaultHasher::new();
