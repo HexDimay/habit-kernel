@@ -88,30 +88,16 @@ pub enum IndexDone {
 
 #[cfg(test)]
 mod tests {
-    use crate::habit::data::{Data, IndexDone, Value};
+    use crate::{habit::data::{Data, IndexDone, Value}, value_list};
 
     #[test]
     fn test_find_index_by_date() {
-        let mut data = Data::new();
-        data.add(Value::new(
-            chrono::NaiveDate::from_ymd_opt(2026, 1, 1).unwrap(),
-            1,
-        ));
-
-        data.add(Value::new(
-            chrono::NaiveDate::from_ymd_opt(2026, 1, 2).unwrap(),
-            1,
-        ));
-
-        data.add(Value::new(
-            chrono::NaiveDate::from_ymd_opt(2026, 1, 6).unwrap(),
-            1,
-        ));
-
-        data.add(Value::new(
-            chrono::NaiveDate::from_ymd_opt(2026, 1, 8).unwrap(),
-            1,
-        ));
+        let data = value_list!(@DMY:
+            (1,1,2026) <= 1,
+            (2,1,2026) <= 1,
+            (6,1,2026) <= 1,
+            (8,1,2026) <= 1
+        );
 
         assert_eq!(data.find_index_by_date(chrono::NaiveDate::from_ymd_opt(2026, 1, 1).unwrap()), IndexDone::IndexExact(0));
         assert_eq!(data.find_index_by_date(chrono::NaiveDate::from_ymd_opt(2026, 1, 2).unwrap()), IndexDone::IndexExact(1));
@@ -121,26 +107,12 @@ mod tests {
 
     #[test]
     fn test_add_value() {
-        let mut data = Data::new();
-        data.add(Value::new(
-            chrono::NaiveDate::from_ymd_opt(2026, 1, 1).unwrap(),
-            1,
-        ));
-
-        data.add(Value::new(
-            chrono::NaiveDate::from_ymd_opt(2026, 1, 2).unwrap(),
-            1,
-        ));
-
-        data.add(Value::new(
-            chrono::NaiveDate::from_ymd_opt(2026, 1, 3).unwrap(),
-            1,
-        ));
-
-        data.add(Value::new(
-            chrono::NaiveDate::from_ymd_opt(2026, 1, 3).unwrap(),
-            1,
-        ));
+        let data = value_list!(@DMY:
+            (1,1,2026) <= 1,
+            (2,1,2026) <= 1,
+            (3,1,2026) <= 1,
+            (3,1,2026) <= 1
+        );
 
         assert_eq!(data.done[1].date, chrono::NaiveDate::from_ymd_opt(2026, 1, 2).unwrap());
         assert_eq!(data.done[1].value, 1);
@@ -148,4 +120,37 @@ mod tests {
         assert_eq!(data.done[2].date, chrono::NaiveDate::from_ymd_opt(2026, 1, 3).unwrap());
         assert_eq!(data.done[2].value, 2);
     }
+}
+
+#[macro_export]
+macro_rules! value_list {
+    (@DMY: $(($day:expr,$month:expr,$year:expr) <= $value:expr),*) => {
+        {
+            let mut data = Data::new();
+
+            $(
+                data.add(Value::new(
+                    chrono::NaiveDate::from_ymd_opt($year, $month, $day).unwrap(),
+                    $value,
+                ));
+            )*
+
+            data
+        }
+    };
+
+    (@YMD: $(($year:expr,$month:expr,$day:expr) <= $value:expr),*) => {
+        {
+            let mut data = Data::new();
+
+            $(
+                data.add(Value::new(
+                    chrono::NaiveDate::from_ymd_opt($year, $month, $day).unwrap(),
+                    $value,
+                ));
+            )*
+
+            data
+        }
+    };
 }
