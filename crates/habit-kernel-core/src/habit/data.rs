@@ -1,126 +1,138 @@
-use std::{fmt::Debug, ops::Index};
+use std::collections::HashMap;
+
+use chrono::NaiveDate;
 
 #[derive(Debug)]
 pub struct Data {
-    pub(crate) done: Vec<Value>,
+    pub(crate) done: HashMap<NaiveDate, Value>,
 }
 
 impl Data {
     pub fn new() -> Self {
         Self {
-            done: Vec::new(),
+            done: HashMap::new(),
         }
     }
 
-    /// Производит создание нового или же дополнение к уже старому значению.
-    pub fn add(&mut self, value: Value) {
-        match self.find_index_by_date(value.date) {
-            IndexDone::IndexBetween(a, b) => {
-                if a == b {
-                    self.done.push(value);
-                    return;
-                }
+    pub fn get(&self, date: NaiveDate) -> Option<&Value> {
+        self.done.get(&date)
+    }
 
-                let a = &self.done[0..=a];
-                let b = &self.done[b..];
-                let mut new_done = vec![];
-                new_done.extend_from_slice(a);
-                new_done.push(value);
-                new_done.extend_from_slice(b);
-                self.done = new_done;
-            },
-            IndexDone::IndexExact(i) => self.done[i].value += value.value,
-            IndexDone::IndexNone => self.done.push(value),
+    pub fn get_mut(&mut self, date: NaiveDate) -> Option<&mut Value> {
+        self.done.get_mut(&date)
+    }
+
+    /// Производит создание нового или же дополнение к уже старому значению.
+    pub fn add(&mut self, date: NaiveDate, value: Value) {
+        if let Some(v) = self.done.get_mut(&date) {
+            *v += value;
+            return;
+        }
+
+        self.done.insert(date, value);
+    }
+
+    pub fn decrement(&mut self, date: NaiveDate) {
+        if let Some(v) = self.done.get_mut(&date) {
+            *v -= 1;
         }
     }
 
     /// del функции не производят полного удаления, а лишь производят обнуление значения.
-    pub fn del_by_date(&mut self, date: chrono::NaiveDate) -> anyhow::Result<()> {
-        match self.find_index_by_date(date) {
-            IndexDone::IndexExact(i) => self.del_by_index(i),
-            _ =>  anyhow::bail!("{date} is not exist."),
+    pub fn del_by_date(&mut self, date: NaiveDate) {
+        if let Some(v) = self.done.get_mut(&date) {
+            v.zeroing();
         }
-    }
-
-    pub fn del_by_index(&mut self, idx: usize) -> anyhow::Result<()> {
-        if self.done.len() <= idx {
-            anyhow::bail!("Index: {idx} >= self.done.len(): {}", self.done.len())
-        }
-
-        self.done[idx].value = 0;
-
-        Ok(())
-    }
-
-    /// Поиск `Value` по дате и возвращение его индекса.
-    /// Если элементов нет, то возвращает `IndexDone::IndexNone`.
-    /// Если поиск успешен, то возвращается позиция элемента `IndexExact(usize)`
-    /// Если элемент не найден, но при этом есть элементы, то возвращается диапозон индексов,
-    /// в котором могут распологаться данные, если индексы одинаковые, то это конец массива данных.
-    pub fn find_index_by_date(&self, date: chrono::NaiveDate) -> IndexDone {
-        if self.done.is_empty() {
-            return IndexDone::IndexNone;
-        }
-
-        let mut min_idx = 0;
-        let mut max_idx = 0;
-        for (i, v) in self.done.iter().enumerate() {
-            if v.date == date {
-                return IndexDone::IndexExact(i);
-            }
-
-            if v.date < date {
-                min_idx = i;
-
-                // Наш массив всегда отсортирован и сохраняется инвариант диапазонов индексов.
-                max_idx = i + 1;
-
-                if max_idx >= self.done.len() {
-                    max_idx = min_idx;
-                }
-            }
-        }
-
-        IndexDone::IndexBetween(min_idx, max_idx)
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct Value {
-    date: chrono::NaiveDate,
-    value: usize,
-}
+pub struct Value(pub usize);
 
 impl Value {
-    pub fn new(date: chrono::NaiveDate, value: usize) -> Self {
-        Self { date, value }
+    pub fn new(value: usize) -> Self {
+        Self(value)
+    }
+
+    pub fn zeroing(&mut self) {
+        self.0 = 0;
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum IndexDone {
-    IndexBetween(usize, usize),
-    IndexExact(usize),
-    IndexNone,
+impl std::ops::Add for Value {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self(self.0 + rhs.0)
+    }
+}
+
+impl std::ops::Sub for Value {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self(self.0 - rhs.0)
+    }
+}
+
+impl std::ops::AddAssign for Value {
+    fn add_assign(&mut self, rhs: Self) {
+        self.0 += rhs.0;
+    }
+}
+
+impl std::ops::SubAssign for Value {
+    fn sub_assign(&mut self, rhs: Self) {
+        let (v1, v2) = (self.0 as i32, rhs.0 as i32);
+        if v1 - v2 < 0 {
+            self.zeroing();
+        } else {
+            self.0 = (v1 - v2) as usize;
+        }
+    }
+}
+
+impl std::ops::SubAssign<i32> for Value {
+    fn sub_assign(&mut self, rhs: i32) {
+        let v = self.0 as i32;
+        if v - rhs < 0 {
+            self.zeroing();
+        } else {
+            self.0 = (v - rhs) as usize;
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{habit::data::{Data, IndexDone, Value}, value_list};
+    use chrono::NaiveDate;
+
+    use crate::{
+        habit::data::{Data, Value},
+        value_list,
+    };
 
     #[test]
-    fn test_find_index_by_date() {
+    fn test_create_list() {
         let data = value_list!(@DMY:
             (1,1,2026) <= 1,
             (2,1,2026) <= 1,
             (6,1,2026) <= 1,
-            (8,1,2026) <= 1
+            (8,1,2026) <= 7
         );
 
-        assert_eq!(data.find_index_by_date(chrono::NaiveDate::from_ymd_opt(2026, 1, 1).unwrap()), IndexDone::IndexExact(0));
-        assert_eq!(data.find_index_by_date(chrono::NaiveDate::from_ymd_opt(2026, 1, 2).unwrap()), IndexDone::IndexExact(1));
-        assert_eq!(data.find_index_by_date(chrono::NaiveDate::from_ymd_opt(2026, 1, 3).unwrap()), IndexDone::IndexBetween(1, 2));
-        assert_eq!(data.find_index_by_date(chrono::NaiveDate::from_ymd_opt(2026, 1, 7).unwrap()), IndexDone::IndexBetween(2, 3));
+        assert_eq!(
+            data.get(NaiveDate::from_ymd_opt(2026, 1, 2).unwrap())
+                .unwrap()
+                .0,
+            1
+        );
+        assert_eq!(
+            data.get(NaiveDate::from_ymd_opt(2026, 1, 8).unwrap())
+                .unwrap()
+                .0,
+            7
+        );
     }
 
     #[test]
@@ -132,11 +144,47 @@ mod tests {
             (3,1,2026) <= 1
         );
 
-        assert_eq!(data.done[1].date, chrono::NaiveDate::from_ymd_opt(2026, 1, 2).unwrap());
-        assert_eq!(data.done[1].value, 1);
+        assert_eq!(
+            data.get(NaiveDate::from_ymd_opt(2026, 1, 2).unwrap())
+                .unwrap()
+                .0,
+            1
+        );
 
-        assert_eq!(data.done[2].date, chrono::NaiveDate::from_ymd_opt(2026, 1, 3).unwrap());
-        assert_eq!(data.done[2].value, 2);
+        assert_eq!(
+            data.get(NaiveDate::from_ymd_opt(2026, 1, 3).unwrap())
+                .unwrap()
+                .0,
+            2
+        );
+    }
+
+    #[test]
+    fn test_del_value() {
+        let mut data = value_list!(@DMY:
+            (1,1,2026) <= 1,
+            (2,1,2026) <= 1,
+            (3,1,2026) <= 1,
+            (3,1,2026) <= 1
+        );
+
+        data.del_by_date(NaiveDate::from_ymd_opt(2026, 1, 3).unwrap());
+
+        assert_eq!(
+            data.done
+                .get(&NaiveDate::from_ymd_opt(2026, 1, 2).unwrap())
+                .unwrap()
+                .0,
+            1
+        );
+
+        assert_eq!(
+            data.done
+                .get(&NaiveDate::from_ymd_opt(2026, 1, 3).unwrap())
+                .unwrap()
+                .0,
+            0
+        );
     }
 }
 
@@ -147,10 +195,10 @@ macro_rules! value_list {
             let mut data = Data::new();
 
             $(
-                data.add(Value::new(
+                data.add(
                     chrono::NaiveDate::from_ymd_opt($year, $month, $day).unwrap(),
-                    $value,
-                ));
+                    Value::new($value)
+                );
             )*
 
             data
@@ -162,10 +210,10 @@ macro_rules! value_list {
             let mut data = Data::new();
 
             $(
-                data.add(Value::new(
+                data.add(
                     chrono::NaiveDate::from_ymd_opt($year, $month, $day).unwrap(),
-                    $value,
-                ));
+                    Value::new($value)
+                );
             )*
 
             data
