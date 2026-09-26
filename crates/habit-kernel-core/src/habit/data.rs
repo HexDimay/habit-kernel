@@ -38,8 +38,7 @@ impl Data {
         }
     }
 
-    /// del функции не производят полного удаления, а лишь производят обнуление значения.
-    pub fn del_by_date(&mut self, date: NaiveDate) {
+    pub fn zeroing_by_date(&mut self, date: NaiveDate) {
         if let Some(v) = self.done.get_mut(&date) {
             v.zeroing();
         }
@@ -153,7 +152,7 @@ mod tests {
             (3,1,2026) <= 1
         );
 
-        data.del_by_date(NaiveDate::from_ymd_opt(2026, 1, 3).unwrap());
+        data.zeroing_by_date(NaiveDate::from_ymd_opt(2026, 1, 3).unwrap());
 
         assert_eq!(
             data.done
