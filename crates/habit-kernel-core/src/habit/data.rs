@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, hash::Hash};
 
 use chrono::NaiveDate;
 
@@ -49,7 +49,17 @@ impl Data {
     }
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+impl Hash for Data {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.done
+            .iter()
+            .map(|c| (c.0.clone(), c.1.clone()))
+            .collect::<Vec<(NaiveDate, Value)>>()
+            .hash(state);
+    }
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Hash)]
 pub struct Value(pub(crate) usize);
 
 impl Value {

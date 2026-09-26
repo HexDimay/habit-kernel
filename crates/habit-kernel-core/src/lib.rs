@@ -1,2 +1,2 @@
-pub mod habit;
 pub mod db;
+pub mod habit;
