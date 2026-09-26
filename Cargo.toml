@@ -1,5 +1,6 @@
 [workspace]
-members = ["crates/habit-kernel-core"]
+resolver = "3"
+members = ["crates/habit-kernel-cli","crates/habit-kernel-core"]
 
 [workspace.package]
 edition = "2024"
