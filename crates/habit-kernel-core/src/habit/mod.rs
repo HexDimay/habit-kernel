@@ -9,7 +9,7 @@ use crate::habit::{
 pub mod data;
 pub mod metadata;
 
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Habit {
     metadata: Metadata,
     data: Data,

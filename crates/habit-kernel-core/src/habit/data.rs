@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use chrono::NaiveDate;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Data {
     pub(crate) done: HashMap<NaiveDate, Value>,
 }
@@ -49,7 +49,7 @@ impl Data {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Value(pub(crate) usize);
 
 impl Value {
