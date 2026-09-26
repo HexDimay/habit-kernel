@@ -26,7 +26,7 @@ impl Data {
         let date = chrono::Local::now().date_naive();
         self.add(date, value);
     }
-    
+
     pub fn add(&mut self, date: NaiveDate, value: Value) {
         if let Some(v) = self.done.get_mut(&date) {
             *v += value;
@@ -89,7 +89,6 @@ impl std::ops::SubAssign for Value {
         self.0 = self.0.saturating_sub(rhs.0);
     }
 }
-
 
 #[cfg(test)]
 mod tests {

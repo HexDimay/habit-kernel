@@ -4,7 +4,7 @@ pub struct Metadata {
     name: String,
     created: chrono::NaiveDate,
     limitation_value: LimitationValue,
-    current_time: chrono::NaiveDate
+    current_time: chrono::NaiveDate,
 }
 
 impl Metadata {
