@@ -4,6 +4,7 @@ pub struct Metadata {
     name: String,
     created: chrono::NaiveDate,
     limitation_value: LimitationValue,
+    current_time: chrono::NaiveDate
 }
 
 impl Metadata {
@@ -13,6 +14,7 @@ impl Metadata {
             name: String::new(),
             created: chrono::Local::now().date_naive(),
             limitation_value: LimitationValue::Unlimited,
+            current_time: chrono::Local::now().date_naive(),
         }
     }
 
@@ -38,6 +40,14 @@ impl Metadata {
 
     pub fn set_limitation_value(&mut self, new_limit: LimitationValue) {
         self.limitation_value = new_limit;
+    }
+
+    pub fn current_time(&self) -> chrono::NaiveDate {
+        self.current_time
+    }
+
+    pub fn update_current_time(&mut self) {
+        self.current_time = chrono::Local::now().date_naive();
     }
 }
 
