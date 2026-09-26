@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, ops::Index};
 
 #[derive(Debug)]
 pub struct Data {
@@ -32,6 +32,24 @@ impl Data {
             IndexDone::IndexExact(i) => self.done[i].value += value.value,
             IndexDone::IndexNone => self.done.push(value),
         }
+    }
+
+    /// del функции не производят полного удаления, а лишь производят обнуление значения.
+    pub fn del_by_date(&mut self, date: chrono::NaiveDate) -> anyhow::Result<()> {
+        match self.find_index_by_date(date) {
+            IndexDone::IndexExact(i) => self.del_by_index(i),
+            _ =>  anyhow::bail!("{date} is not exist."),
+        }
+    }
+
+    pub fn del_by_index(&mut self, idx: usize) -> anyhow::Result<()> {
+        if self.done.len() <= idx {
+            anyhow::bail!("Index: {idx} >= self.done.len(): {}", self.done.len())
+        }
+
+        self.done[idx].value = 0;
+
+        Ok(())
     }
 
     /// Поиск `Value` по дате и возвращение его индекса.
