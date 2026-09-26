@@ -34,7 +34,7 @@ impl Data {
 
     pub fn decrement(&mut self, date: NaiveDate) {
         if let Some(v) = self.done.get_mut(&date) {
-            *v -= 1;
+            *v -= Value(1);
         }
     }
 
@@ -71,7 +71,7 @@ impl std::ops::Sub for Value {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        Self(self.0 - rhs.0)
+        Self(self.0.saturating_sub(rhs.0))
     }
 }
 
@@ -83,25 +83,10 @@ impl std::ops::AddAssign for Value {
 
 impl std::ops::SubAssign for Value {
     fn sub_assign(&mut self, rhs: Self) {
-        let (v1, v2) = (self.0 as i32, rhs.0 as i32);
-        if v1 - v2 < 0 {
-            self.zeroing();
-        } else {
-            self.0 = (v1 - v2) as usize;
-        }
+        self.0 = self.0.saturating_sub(rhs.0);
     }
 }
 
-impl std::ops::SubAssign<i32> for Value {
-    fn sub_assign(&mut self, rhs: i32) {
-        let v = self.0 as i32;
-        if v - rhs < 0 {
-            self.zeroing();
-        } else {
-            self.0 = (v - rhs) as usize;
-        }
-    }
-}
 
 #[cfg(test)]
 mod tests {
