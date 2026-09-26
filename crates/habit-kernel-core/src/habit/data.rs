@@ -22,7 +22,11 @@ impl Data {
         self.done.get_mut(&date)
     }
 
-    /// Производит создание нового или же дополнение к уже старому значению.
+    pub fn add_now(&mut self, value: Value) {
+        let date = chrono::Local::now().date_naive();
+        self.add(date, value);
+    }
+    
     pub fn add(&mut self, date: NaiveDate, value: Value) {
         if let Some(v) = self.done.get_mut(&date) {
             *v += value;
@@ -46,7 +50,7 @@ impl Data {
 }
 
 #[derive(Debug, Clone)]
-pub struct Value(pub usize);
+pub struct Value(pub(crate) usize);
 
 impl Value {
     pub fn new(value: usize) -> Self {
