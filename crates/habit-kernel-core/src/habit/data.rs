@@ -1,14 +1,36 @@
-use std::collections::LinkedList;
+use std::fmt::Debug;
 
 #[derive(Debug)]
 pub struct Data {
-    pub(crate) done: LinkedList<Value>,
+    pub(crate) done: Vec<Value>,
 }
 
 impl Data {
     pub fn new() -> Self {
         Self {
-            done: LinkedList::new(),
+            done: Vec::new(),
+        }
+    }
+
+    /// Производит создание нового или же дополнение к уже старому значению.
+    pub fn add(&mut self, value: Value) {
+        match self.find_index_by_date(value.date) {
+            IndexDone::IndexBetween(a, b) => {
+                if a == b {
+                    self.done.push(value);
+                    return;
+                }
+
+                let a = &self.done[0..=a];
+                let b = &self.done[b..];
+                let mut new_done = vec![];
+                new_done.extend_from_slice(a);
+                new_done.push(value);
+                new_done.extend_from_slice(b);
+                self.done = new_done;
+            },
+            IndexDone::IndexExact(i) => self.done[i].value += value.value,
+            IndexDone::IndexNone => self.done.push(value),
         }
     }
 
@@ -71,22 +93,22 @@ mod tests {
     #[test]
     fn test_find_index_by_date() {
         let mut data = Data::new();
-        data.done.push_back(Value::new(
+        data.add(Value::new(
             chrono::NaiveDate::from_ymd_opt(2026, 1, 1).unwrap(),
             1,
         ));
 
-        data.done.push_back(Value::new(
+        data.add(Value::new(
             chrono::NaiveDate::from_ymd_opt(2026, 1, 2).unwrap(),
             1,
         ));
 
-        data.done.push_back(Value::new(
+        data.add(Value::new(
             chrono::NaiveDate::from_ymd_opt(2026, 1, 6).unwrap(),
             1,
         ));
 
-        data.done.push_back(Value::new(
+        data.add(Value::new(
             chrono::NaiveDate::from_ymd_opt(2026, 1, 8).unwrap(),
             1,
         ));
@@ -95,5 +117,35 @@ mod tests {
         assert_eq!(data.find_index_by_date(chrono::NaiveDate::from_ymd_opt(2026, 1, 2).unwrap()), IndexDone::IndexExact(1));
         assert_eq!(data.find_index_by_date(chrono::NaiveDate::from_ymd_opt(2026, 1, 3).unwrap()), IndexDone::IndexBetween(1, 2));
         assert_eq!(data.find_index_by_date(chrono::NaiveDate::from_ymd_opt(2026, 1, 7).unwrap()), IndexDone::IndexBetween(2, 3));
+    }
+
+    #[test]
+    fn test_add_value() {
+        let mut data = Data::new();
+        data.add(Value::new(
+            chrono::NaiveDate::from_ymd_opt(2026, 1, 1).unwrap(),
+            1,
+        ));
+
+        data.add(Value::new(
+            chrono::NaiveDate::from_ymd_opt(2026, 1, 2).unwrap(),
+            1,
+        ));
+
+        data.add(Value::new(
+            chrono::NaiveDate::from_ymd_opt(2026, 1, 3).unwrap(),
+            1,
+        ));
+
+        data.add(Value::new(
+            chrono::NaiveDate::from_ymd_opt(2026, 1, 3).unwrap(),
+            1,
+        ));
+
+        assert_eq!(data.done[1].date, chrono::NaiveDate::from_ymd_opt(2026, 1, 2).unwrap());
+        assert_eq!(data.done[1].value, 1);
+
+        assert_eq!(data.done[2].date, chrono::NaiveDate::from_ymd_opt(2026, 1, 3).unwrap());
+        assert_eq!(data.done[2].value, 2);
     }
 }
