@@ -78,4 +78,8 @@ impl Habit {
     pub fn metadata(&self) -> &Metadata {
         &self.metadata
     }
+
+    pub fn mut_metadata(&mut self) -> &mut Metadata {
+        &mut self.metadata
+    }
 }

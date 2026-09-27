@@ -53,4 +53,11 @@ impl DataBase {
 
         Ok(())
     }
+
+    pub fn add_habit(&mut self, name: String) {
+        let mut habit = Habit::new();
+        habit.mut_metadata().set_name(name);
+
+        self.habit_list.push(habit);
+    }
 }
