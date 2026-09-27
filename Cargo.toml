@@ -12,6 +12,8 @@ version = "0.0.1"
 
 
 [workspace.dependencies]
+habit-kernel-core = { path = "./crates/habit-kernel-core" }
+
 chrono = { version = "0.4.45", features = ["serde"] }
 anyhow = "1.0.104"
 uuid = { version = "1.26.1", features = ["v4", "serde"] }
