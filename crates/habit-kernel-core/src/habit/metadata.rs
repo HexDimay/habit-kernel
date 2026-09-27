@@ -52,9 +52,19 @@ impl Metadata {
 }
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize, Hash,
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize, Hash
 )]
 pub enum LimitationValue {
     Max(usize),
     Unlimited,
+}
+
+impl std::fmt::Display for LimitationValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let res = match self {
+            LimitationValue::Unlimited => "Unlimited".to_owned(),
+            LimitationValue::Max(num) => format!("Max: {num}")
+        };
+        write!(f, "{res}")
+    }
 }
