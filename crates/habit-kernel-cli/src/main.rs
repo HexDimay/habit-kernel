@@ -1,6 +1,8 @@
 use clap::Parser;
 use clap_derive::Subcommand;
-use habit_kernel_core::db::DataBase;
+use habit_kernel_core::{db::DataBase, habit::Habit};
+
+use crate::Commands::View;
 
 #[derive(Parser, Debug)]
 #[command(name = "HabitKernel CLI")]
@@ -13,9 +15,14 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
-    Create {
-        #[arg(long, value_name = "NAME HABIT")]
-        habit: Option<String>,
+    Habit {
+        #[arg(long, value_name = "HABIT NAME")]
+        create: String,
+    },
+
+    View {
+        #[arg(long)]
+        all: bool
     }
 }
 
@@ -26,9 +33,20 @@ fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Create { habit } => {
-            if let Some(habit_name) = habit {
-                create_habit(&mut db, habit_name);
+        Commands::Habit { create } => {
+            if !create.is_empty() {
+                create_habit(&mut db, create);
+            }
+        },
+
+        Commands::View { all } => {
+            if all {
+                let mut first_row = format!("| ID\t\t\t\t\t| NAME\t\t\t\t| CREATED\t| LIMITATION\t| DAYS\t|\n");
+                db.habit_list.iter().for_each(|h| {
+                    first_row.push_str(short_string_view_habit(h).as_str());
+                });
+
+                println!("{first_row}");
             }
         }
     }
@@ -38,4 +56,17 @@ fn main() -> anyhow::Result<()> {
 
 fn create_habit(db: &mut DataBase, name: String) {
     db.add_habit(name);
+}
+
+fn short_string_view_habit(habit: &Habit) -> String {
+    let (id, name, created, limit, count_days) = (
+        habit.metadata().id(),
+        habit.metadata().name(),
+        habit.metadata().created(),
+        habit.metadata().limitation_value(),
+        habit.data().count_days()
+    );
+
+
+    format!("| {id}\t| {name}\t| {created}\t| {limit}\t| {count_days}\t|\n")
 }
