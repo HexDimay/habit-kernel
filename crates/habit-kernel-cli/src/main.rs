@@ -32,12 +32,12 @@ enum HabitCommand {
 
 #[derive(Debug, Args)]
 struct CreateArgs {
-    name: Option<String>,
+    name: String,
 }
 
 #[derive(Debug, Args)]
 struct DeleteArgs {
-    id: Option<String>,
+    id: String,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -48,17 +48,15 @@ fn main() -> anyhow::Result<()> {
 
     match cli.command {
         Commands::Habit { command } => match command {
-            HabitCommand::Create(create_args) => create_habit(&mut db, create_args.name.unwrap()),
-            HabitCommand::Delete(delete_args) => {
-                match delete_habit(&mut db, delete_args.id.unwrap()) {
-                    Ok(h) => println!(
-                        "The habit was successfully removed. [ id: {}; name: {}; ]",
-                        h.metadata().id(),
-                        h.metadata().name()
-                    ),
-                    Err(e) => println!("The habit was successfully removed. Error: {e}"),
-                }
-            }
+            HabitCommand::Create(create_args) => create_habit(&mut db, create_args.name),
+            HabitCommand::Delete(delete_args) => match delete_habit(&mut db, delete_args.id) {
+                Ok(h) => println!(
+                    "The habit was successfully removed. [ id: {}; name: {}; ]",
+                    h.metadata().id(),
+                    h.metadata().name()
+                ),
+                Err(e) => println!("The habit was successfully removed. Error: {e}"),
+            },
         },
 
         Commands::View { all } => {
