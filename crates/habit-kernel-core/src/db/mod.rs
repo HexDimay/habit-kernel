@@ -60,4 +60,14 @@ impl DataBase {
 
         self.habit_list.push(habit);
     }
+
+    pub fn del_by_id(&mut self, id: uuid::Uuid) -> Option<Habit> {
+        for (idx, habit) in self.habit_list.iter().enumerate() {
+            if habit.metadata().id() == id {
+                return Some(self.habit_list.remove(idx));
+            }
+        }
+
+        None
+    }
 }
