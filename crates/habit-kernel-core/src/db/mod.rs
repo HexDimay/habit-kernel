@@ -16,8 +16,9 @@ impl DataBase {
         }
     }
 
+    /// Save to db.json file and load from db.json file
     pub const fn save_load_path() -> &'static str {
-        "./"
+        "./db.json"
     }
 
     pub fn save(&self) -> anyhow::Result<()> {
