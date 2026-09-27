@@ -55,7 +55,7 @@ fn main() -> anyhow::Result<()> {
                     h.metadata().id(),
                     h.metadata().name()
                 ),
-                Err(e) => println!("The habit was successfully removed. Error: {e}"),
+                Err(e) => println!("A habit with such an ID was not found.. Error: {e}"),
             },
         },
 
