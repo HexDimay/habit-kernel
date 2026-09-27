@@ -1,5 +1,6 @@
 use clap::Parser;
 use clap_derive::Subcommand;
+use habit_kernel_core::db::DataBase;
 
 #[derive(Parser, Debug)]
 #[command(name = "HabitKernel CLI")]
@@ -12,14 +13,29 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
-    Hello { name: String }
+    Create {
+        #[arg(long, value_name = "NAME HABIT")]
+        habit: Option<String>,
+    }
 }
 
+fn main() -> anyhow::Result<()> {
+    let mut db = DataBase::load()?.unwrap_or_else(|| DataBase::new() );
+    db.save()?;
 
-fn main() {
     let cli = Cli::parse();
 
-    match &cli.command {
-        Commands::Hello { name } => println!("Hello, {name}")
+    match cli.command {
+        Commands::Create { habit } => {
+            if let Some(habit_name) = habit {
+                create_habit(&mut db, habit_name);
+            }
+        }
     }
+
+    db.save()
+}
+
+fn create_habit(db: &mut DataBase, name: String) {
+    db.add_habit(name);
 }
