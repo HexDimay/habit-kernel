@@ -47,6 +47,10 @@ impl Data {
             v.zeroing();
         }
     }
+
+    pub fn count_days(&self) -> usize {
+        self.done.len()
+    }
 }
 
 impl Hash for Data {
