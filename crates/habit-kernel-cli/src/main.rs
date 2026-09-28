@@ -3,6 +3,7 @@ use habit_kernel_cli::commands::{
     Cli, Command, HabitCommand,
     create::create_habit,
     delete::delete_habit,
+    edit::edit_habit,
     select::select_habit,
     view::{view_all_habits, view_selected_habit},
 };
@@ -19,7 +20,7 @@ fn main() -> anyhow::Result<()> {
             HabitCommand::Create(args) => create_habit(&mut db, args),
             HabitCommand::Delete(args) => delete_habit(&mut db, args),
             HabitCommand::Select(args) => select_habit(&mut db, args),
-            // _ => {}
+            HabitCommand::Edit(args) => edit_habit(&mut db, args),
         },
 
         Command::View { all, selected } => {

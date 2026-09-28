@@ -1,9 +1,10 @@
 use clap_derive::{Parser, Subcommand};
 
-use crate::commands::{create::CreateArgs, delete::DeleteArgs, select::SelectArgs};
+use crate::commands::{create::CreateArgs, delete::DeleteArgs, edit::EditArgs, select::SelectArgs};
 
 pub mod create;
 pub mod delete;
+pub mod edit;
 pub mod select;
 pub mod view;
 
@@ -42,4 +43,5 @@ pub enum HabitCommand {
     Create(CreateArgs),
     Delete(DeleteArgs),
     Select(SelectArgs),
+    Edit(EditArgs),
 }

@@ -18,3 +18,13 @@ pub fn select_habit(db: &mut DataBase, args: &SelectArgs) {
         Err(e) => println!("{:?}", e),
     }
 }
+
+#[macro_export]
+macro_rules! check_current_habit {
+    ($db:expr) => {
+        if $db.get_current_habit().is_none() {
+            println!("Couldn't choose a habit.");
+            return;
+        }
+    };
+}

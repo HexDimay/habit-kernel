@@ -1,10 +1,9 @@
 use habit_kernel_core::{db::DataBase, habit::Habit};
 
+use crate::check_current_habit;
+
 pub fn view_selected_habit(db: &DataBase) {
-    if db.current_habit.is_none() {
-        println!("Couldn't choose a habit.");
-        return;
-    }
+    check_current_habit!(db);
 
     let mut row = format!("========SELECT HABIT========\n");
     row.push_str("| ID\t\t\t\t\t| NAME\t\t\t\t| CREATED\t| LIMITATION\t| DAYS\t|\n");
