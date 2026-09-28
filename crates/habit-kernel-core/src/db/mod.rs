@@ -20,6 +20,30 @@ impl DataBase {
         }
     }
 
+    pub fn get_current_habit(&self) -> Option<&Habit> {
+        self.current_habit.as_ref()
+    }
+
+    pub fn get_mut_current_habit(&mut self) -> Option<&mut Habit> {
+        self.current_habit.as_mut()
+    }
+
+    pub fn get_by_idx(&self, index: usize) -> Option<&Habit> {
+        self.habit_list.get(index)
+    }
+
+    pub fn get_mut_by_idx(&mut self, index: usize) -> Option<&mut Habit> {
+        self.habit_list.get_mut(index)
+    }
+
+    pub fn get_by_id(&self, id: uuid::Uuid) -> Option<&Habit> {
+        self.iter().find(|h| h.metadata().id() == id)
+    }
+
+    pub fn get_mut_by_id(&mut self, id: uuid::Uuid) -> Option<&mut Habit> {
+        self.iter_mut().find(|h| h.metadata().id() == id)
+    }
+
     /// Save to db.json file and load from db.json file
     pub const fn save_load_path() -> &'static str {
         "./db.json"
@@ -60,6 +84,10 @@ impl DataBase {
 
     pub fn iter(&self) -> std::slice::Iter<'_, Habit> {
         self.habit_list.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, Habit> {
+        self.habit_list.iter_mut()
     }
 
     pub fn add_habit(&mut self, name: &str) {
