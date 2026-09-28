@@ -59,6 +59,16 @@ pub enum LimitationValue {
     Unlimited,
 }
 
+impl From<String> for LimitationValue {
+    fn from(value: String) -> Self {
+        if let Ok(n) = value.parse() {
+            return LimitationValue::Max(n);
+        }
+
+        LimitationValue::Unlimited
+    }
+}
+
 impl std::fmt::Display for LimitationValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let res = match self {
