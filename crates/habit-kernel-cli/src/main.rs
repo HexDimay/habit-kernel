@@ -1,6 +1,10 @@
 use clap::Parser;
 use habit_kernel_cli::commands::{
-    Cli, Command, HabitCommand, create::create_habit, delete::delete_habit, view::view_all_habits,
+    Cli, Command, HabitCommand,
+    create::create_habit,
+    delete::delete_habit,
+    select::select_habit,
+    view::{view_all_habits, view_selected_habit},
 };
 use habit_kernel_core::db::DataBase;
 
@@ -12,16 +16,22 @@ fn main() -> anyhow::Result<()> {
 
     match cli.command() {
         Command::Habit { command } => match command {
-            HabitCommand::Create(create_args) => create_habit(&mut db, create_args),
-            HabitCommand::Delete(delete_args) => delete_habit(&mut db, delete_args),
+            HabitCommand::Create(args) => create_habit(&mut db, args),
+            HabitCommand::Delete(args) => delete_habit(&mut db, args),
+            HabitCommand::Select(args) => select_habit(&mut db, args),
+            // _ => {}
         },
 
-        Command::View { all } => {
+        Command::View { all, selected } => {
             if *all {
-                view_all_habits(&mut db);
+                view_all_habits(&db);
+            }
+
+            if *selected {
+                view_selected_habit(&db);
             }
         }
     }
 
-    db.update()
+    db.save()
 }

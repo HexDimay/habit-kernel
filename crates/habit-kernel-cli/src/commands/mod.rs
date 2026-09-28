@@ -1,9 +1,10 @@
 use clap_derive::{Parser, Subcommand};
 
-use crate::commands::{create::CreateArgs, delete::DeleteArgs};
+use crate::commands::{create::CreateArgs, delete::DeleteArgs, select::SelectArgs};
 
 pub mod create;
 pub mod delete;
+pub mod select;
 pub mod view;
 
 #[derive(Parser, Debug)]
@@ -31,10 +32,14 @@ pub enum Command {
     View {
         #[arg(long)]
         all: bool,
+
+        #[arg(short, long)]
+        selected: bool,
     },
 }
 #[derive(Debug, Subcommand)]
 pub enum HabitCommand {
     Create(CreateArgs),
     Delete(DeleteArgs),
+    Select(SelectArgs),
 }

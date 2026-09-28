@@ -1,6 +1,19 @@
 use habit_kernel_core::{db::DataBase, habit::Habit};
 
-pub fn view_all_habits(db: &mut DataBase) {
+pub fn view_selected_habit(db: &DataBase) {
+    if db.current_habit.is_none() {
+        println!("Couldn't choose a habit.");
+        return;
+    }
+
+    let mut row = format!("========SELECT HABIT========\n");
+    row.push_str("| ID\t\t\t\t\t| NAME\t\t\t\t| CREATED\t| LIMITATION\t| DAYS\t|\n");
+    row.push_str(&short_string_view_habit(db.current_habit.as_ref().unwrap()));
+
+    println!("{row}");
+}
+
+pub fn view_all_habits(db: &DataBase) {
     let mut first_row = format!("| ID\t\t\t\t\t| NAME\t\t\t\t| CREATED\t| LIMITATION\t| DAYS\t|\n");
     db.iter().for_each(|h| {
         first_row.push_str(short_string_view_habit(h).as_str());
