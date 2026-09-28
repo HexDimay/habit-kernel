@@ -1,17 +1,21 @@
 use std::hash::{DefaultHasher, Hash, Hasher};
 
+use anyhow::bail;
+
 use crate::habit::Habit;
 
 pub mod traits;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, Hash)]
 pub struct DataBase {
+    pub current_habit: Option<Habit>,
     pub habit_list: Vec<Habit>,
 }
 
 impl DataBase {
     pub fn new() -> Self {
         Self {
+            current_habit: None,
             habit_list: Vec::new(),
         }
     }
@@ -63,6 +67,17 @@ impl DataBase {
         habit.mut_metadata().set_name(name);
 
         self.habit_list.push(habit);
+    }
+
+    /// Это действие равносильно удалению из основного списка.
+    pub fn select_habit(&mut self, id: uuid::Uuid) -> anyhow::Result<()> {
+        self.current_habit = self.del_by_id(id);
+
+        if self.current_habit.is_none() {
+            bail!("Couldn't choose a habit.");
+        }
+
+        Ok(())
     }
 
     pub fn del_by_id(&mut self, id: uuid::Uuid) -> Option<Habit> {
