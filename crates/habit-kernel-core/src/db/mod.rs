@@ -54,7 +54,11 @@ impl DataBase {
         Ok(())
     }
 
-    pub fn add_habit(&mut self, name: String) {
+    pub fn iter(&self) -> std::slice::Iter<'_, Habit> {
+        self.habit_list.iter()
+    }
+
+    pub fn add_habit(&mut self, name: &str) {
         let mut habit = Habit::new();
         habit.mut_metadata().set_name(name);
 
@@ -62,7 +66,7 @@ impl DataBase {
     }
 
     pub fn del_by_id(&mut self, id: uuid::Uuid) -> Option<Habit> {
-        for (idx, habit) in self.habit_list.iter().enumerate() {
+        for (idx, habit) in self.iter().enumerate() {
             if habit.metadata().id() == id {
                 return Some(self.habit_list.remove(idx));
             }

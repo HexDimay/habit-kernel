@@ -26,8 +26,8 @@ impl Metadata {
         &self.name
     }
 
-    pub fn set_name(&mut self, new_name: String) {
-        self.name = new_name;
+    pub fn set_name(&mut self, new_name: &str) {
+        self.name = new_name.to_owned();
     }
 
     pub fn created(&self) -> &chrono::NaiveDate {
