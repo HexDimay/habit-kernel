@@ -1,4 +1,4 @@
-use std::hash::{DefaultHasher, Hash, Hasher};
+use std::hash::Hash;
 
 use anyhow::bail;
 
@@ -43,20 +43,20 @@ impl DataBase {
         Ok(Some(serde_json::from_str(&s)?))
     }
 
-    pub fn update(&mut self) -> anyhow::Result<()> {
-        let mut old_hasher = DefaultHasher::new();
-        let mut current_hasher = DefaultHasher::new();
-        let old = Self::load()?.unwrap();
+    // pub fn update(&mut self) -> anyhow::Result<()> {
+    //     let mut old_hasher = DefaultHasher::new();
+    //     let mut current_hasher = DefaultHasher::new();
+    //     let old = Self::load()?.unwrap();
 
-        old.hash(&mut old_hasher);
-        self.hash(&mut current_hasher);
+    //     old.hash(&mut old_hasher);
+    //     self.hash(&mut current_hasher);
 
-        if old_hasher.finish() != current_hasher.finish() {
-            self.save()?;
-        }
+    //     if old_hasher.finish() != current_hasher.finish() {
+    //         self.save()?;
+    //     }
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     pub fn iter(&self) -> std::slice::Iter<'_, Habit> {
         self.habit_list.iter()
