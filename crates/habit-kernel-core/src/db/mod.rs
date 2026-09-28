@@ -71,6 +71,10 @@ impl DataBase {
 
     /// Это действие равносильно удалению из основного списка.
     pub fn select_habit(&mut self, id: uuid::Uuid) -> anyhow::Result<()> {
+        if let Some(_) = self.current_habit {
+            self.habit_list.push(self.current_habit.take().unwrap());
+        }
+
         self.current_habit = self.del_by_id(id);
 
         if self.current_habit.is_none() {
