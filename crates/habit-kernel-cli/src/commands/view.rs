@@ -1,34 +1,46 @@
 use habit_kernel_core::{db::DataBase, habit::Habit};
 
+use cli_table::{Style, Table, print_stdout};
+
 use crate::check_current_habit;
 
 pub fn view_selected_habit(db: &DataBase) {
     check_current_habit!(db);
+    let habit = db.get_current_habit().unwrap();
 
-    let mut row = format!("========SELECT HABIT========\n");
-    row.push_str("| ID\t\t\t\t\t| NAME\t\t\t\t| CREATED\t| LIMITATION\t| DAYS\t|\n");
-    row.push_str(&short_string_view_habit(db.current_habit.as_ref().unwrap()));
+    let table = vec![get_col_habit_for_table(habit)]
+        .table()
+        .title(vec!["ID", "NAME", "CREATED", "LIMITATION", "DAYS"])
+        .bold(true);
 
-    println!("{row}");
+    print_stdout(table).unwrap();
 }
 
 pub fn view_all_habits(db: &DataBase) {
-    let mut first_row = format!("| ID\t\t\t\t\t| NAME\t\t\t\t| CREATED\t| LIMITATION\t| DAYS\t|\n");
-    db.iter().for_each(|h| {
-        first_row.push_str(short_string_view_habit(h).as_str());
+    let mut table = vec![];
+
+    if let Some(current_hsbit) = db.get_current_habit() {
+        table.push(get_col_habit_for_table(current_hsbit));
+    }
+
+    db.iter().for_each(|habit| {
+        table.push(get_col_habit_for_table(habit));
     });
 
-    println!("{first_row}");
+    let table = table
+        .table()
+        .title(vec!["ID", "NAME", "CREATED", "LIMITATION", "DAYS"])
+        .bold(true);
+
+    print_stdout(table).unwrap();
 }
 
-pub fn short_string_view_habit(habit: &Habit) -> String {
-    let (id, name, created, limit, count_days) = (
-        habit.metadata().id(),
-        habit.metadata().name(),
-        habit.metadata().created(),
-        habit.metadata().limitation_value(),
-        habit.data().count_days(),
-    );
-
-    format!("| {id}\t| {name}\t| {created}\t| {limit}\t| {count_days}\t|\n")
+fn get_col_habit_for_table(habit: &Habit) -> Vec<String> {
+    vec![
+        habit.metadata().id().to_string(),
+        habit.metadata().name().to_owned(),
+        habit.metadata().created().to_string(),
+        habit.metadata().limitation_value().to_string(),
+        habit.data().count_days().to_string(),
+    ]
 }

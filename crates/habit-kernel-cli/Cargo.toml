@@ -13,3 +13,5 @@ clap_derive = "4.6.7"
 anyhow = { workspace = true }
 habit-kernel-core = { workspace = true }
 uuid = { workspace = true }
+
+cli-table = "0.5.0"
