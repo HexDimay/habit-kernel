@@ -13,10 +13,7 @@ impl SelectArgs {
 }
 
 pub fn select_habit(db: &mut DataBase, args: &SelectArgs) {
-    match db.select_habit(*args.id()) {
-        Ok(_) => println!("Habit selected."),
-        Err(e) => println!("{:?}", e),
-    }
+    db.select_habit(*args.id());
 }
 
 #[macro_export]

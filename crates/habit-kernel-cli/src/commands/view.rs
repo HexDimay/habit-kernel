@@ -19,10 +19,6 @@ pub fn view_selected_habit(db: &DataBase) {
 pub fn view_all_habits(db: &DataBase) {
     let mut table = vec![];
 
-    if let Some(current_hsbit) = db.get_current_habit() {
-        table.push(get_col_habit_for_table(current_hsbit));
-    }
-
     db.iter().for_each(|habit| {
         table.push(get_col_habit_for_table(habit));
     });
