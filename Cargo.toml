@@ -3,6 +3,7 @@ resolver = "3"
 members = ["crates/habit-kernel-cli","crates/habit-kernel-core"]
 
 [workspace.package]
+description = "`HabitKernel` is an open‑source habit manager. Create, mark, and edit your habits without restrictions."
 edition = "2024"
 rust-version = "1.98.0"
 authors = ["0xDimay <HexDimay@yandex.ru>"]
