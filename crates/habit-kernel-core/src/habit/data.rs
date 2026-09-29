@@ -48,8 +48,12 @@ impl Data {
         }
     }
 
-    pub fn count_days(&self) -> usize {
-        self.done.len()
+    pub fn count_current_done(&self) -> usize {
+        if let Some(n) = self.done.get(&chrono::Local::now().date_naive()) {
+            return n.0;
+        }
+
+        0
     }
 }
 

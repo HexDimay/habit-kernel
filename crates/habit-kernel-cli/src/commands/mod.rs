@@ -4,6 +4,7 @@ use crate::commands::{create::CreateArgs, delete::DeleteArgs, edit::EditArgs, se
 
 pub mod create;
 pub mod delete;
+pub mod done;
 pub mod edit;
 pub mod select;
 pub mod view;
@@ -44,4 +45,5 @@ pub enum HabitCommand {
     Delete(DeleteArgs),
     Select(SelectArgs),
     Edit(EditArgs),
+    Done,
 }

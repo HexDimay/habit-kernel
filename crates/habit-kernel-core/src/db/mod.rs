@@ -97,6 +97,12 @@ impl DataBase {
         self.current_habit = None;
     }
 
+    pub fn current_done(&mut self) {
+        if let Some(c_h) = self.get_mut_current_habit() {
+            c_h.increment();
+        }
+    }
+
     pub fn del_by_id(&mut self, id: uuid::Uuid) -> Option<Habit> {
         for (idx, habit) in self.iter().enumerate() {
             if habit.metadata().id() == id {

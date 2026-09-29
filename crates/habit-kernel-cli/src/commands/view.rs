@@ -10,7 +10,7 @@ pub fn view_selected_habit(db: &DataBase) {
 
     let table = vec![get_col_habit_for_table(habit)]
         .table()
-        .title(vec!["ID", "NAME", "CREATED", "LIMITATION", "DAYS"])
+        .title(vec!["ID", "NAME", "CREATED", "LIMITATION", "Done"])
         .bold(true);
 
     print_stdout(table).unwrap();
@@ -25,7 +25,7 @@ pub fn view_all_habits(db: &DataBase) {
 
     let table = table
         .table()
-        .title(vec!["ID", "NAME", "CREATED", "LIMITATION", "DAYS"])
+        .title(vec!["ID", "NAME", "CREATED", "LIMITATION", "Done"])
         .bold(true);
 
     print_stdout(table).unwrap();
@@ -37,6 +37,6 @@ fn get_col_habit_for_table(habit: &Habit) -> Vec<String> {
         habit.metadata().name().to_owned(),
         habit.metadata().created().to_string(),
         habit.metadata().limitation_value().to_string(),
-        habit.data().count_days().to_string(),
+        habit.data().count_current_done().to_string(),
     ]
 }
