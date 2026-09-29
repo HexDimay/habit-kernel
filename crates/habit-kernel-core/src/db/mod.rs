@@ -1,15 +1,13 @@
 use std::hash::Hash;
 
-use anyhow::bail;
-
 use crate::habit::Habit;
 
 pub mod traits;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, Hash)]
 pub struct DataBase {
-    pub current_habit: Option<Habit>,
-    pub habit_list: Vec<Habit>,
+    current_habit: Option<uuid::Uuid>,
+    habit_list: Vec<Habit>,
 }
 
 impl DataBase {
@@ -21,11 +19,19 @@ impl DataBase {
     }
 
     pub fn get_current_habit(&self) -> Option<&Habit> {
-        self.current_habit.as_ref()
+        if let Some(id) = self.current_habit {
+            return self.get_by_id(id);
+        }
+
+        None
     }
 
     pub fn get_mut_current_habit(&mut self) -> Option<&mut Habit> {
-        self.current_habit.as_mut()
+        if let Some(id) = self.current_habit {
+            return self.get_mut_by_id(id);
+        }
+
+        None
     }
 
     pub fn get_by_idx(&self, index: usize) -> Option<&Habit> {
@@ -67,21 +73,6 @@ impl DataBase {
         Ok(Some(serde_json::from_str(&s)?))
     }
 
-    // pub fn update(&mut self) -> anyhow::Result<()> {
-    //     let mut old_hasher = DefaultHasher::new();
-    //     let mut current_hasher = DefaultHasher::new();
-    //     let old = Self::load()?.unwrap();
-
-    //     old.hash(&mut old_hasher);
-    //     self.hash(&mut current_hasher);
-
-    //     if old_hasher.finish() != current_hasher.finish() {
-    //         self.save()?;
-    //     }
-
-    //     Ok(())
-    // }
-
     pub fn iter(&self) -> std::slice::Iter<'_, Habit> {
         self.habit_list.iter()
     }
@@ -97,19 +88,13 @@ impl DataBase {
         self.habit_list.push(habit);
     }
 
-    /// Это действие равносильно удалению из основного списка.
-    pub fn select_habit(&mut self, id: uuid::Uuid) -> anyhow::Result<()> {
-        if let Some(_) = self.current_habit {
-            self.habit_list.push(self.current_habit.take().unwrap());
+    pub fn select_habit(&mut self, id: uuid::Uuid) {
+        if self.get_by_id(id).is_some() {
+            self.current_habit = Some(id);
+            return;
         }
 
-        self.current_habit = self.del_by_id(id);
-
-        if self.current_habit.is_none() {
-            bail!("Couldn't choose a habit.");
-        }
-
-        Ok(())
+        self.current_habit = None;
     }
 
     pub fn del_by_id(&mut self, id: uuid::Uuid) -> Option<Habit> {
