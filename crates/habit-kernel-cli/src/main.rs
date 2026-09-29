@@ -1,6 +1,7 @@
 use clap::Parser;
 use habit_kernel_cli::commands::{
     Cli, Command, HabitCommand,
+    chart::chart_habit,
     create::create_habit,
     delete::delete_habit,
     done::done_habit,
@@ -23,6 +24,7 @@ fn main() -> anyhow::Result<()> {
             HabitCommand::Select(args) => select_habit(&mut db, args),
             HabitCommand::Edit(args) => edit_habit(&mut db, args),
             HabitCommand::Done => done_habit(&mut db),
+            HabitCommand::Chart(args) => chart_habit(&mut db, args),
         },
 
         Command::View { all, selected } => {

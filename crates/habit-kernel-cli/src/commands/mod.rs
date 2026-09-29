@@ -1,7 +1,10 @@
 use clap_derive::{Parser, Subcommand};
 
-use crate::commands::{create::CreateArgs, delete::DeleteArgs, edit::EditArgs, select::SelectArgs};
+use crate::commands::{
+    chart::ChartArgs, create::CreateArgs, delete::DeleteArgs, edit::EditArgs, select::SelectArgs,
+};
 
+pub mod chart;
 pub mod create;
 pub mod delete;
 pub mod done;
@@ -46,4 +49,5 @@ pub enum HabitCommand {
     Select(SelectArgs),
     Edit(EditArgs),
     Done,
+    Chart(ChartArgs),
 }

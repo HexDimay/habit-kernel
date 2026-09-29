@@ -75,6 +75,10 @@ impl Value {
         Self(value)
     }
 
+    pub fn get(&self) -> usize {
+        self.0
+    }
+
     pub fn zeroing(&mut self) {
         self.0 = 0;
     }
