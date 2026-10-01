@@ -20,3 +20,4 @@ anyhow = "1.0.104"
 uuid = { version = "1.26.1", features = ["v4", "serde"] }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = { version = "1.0.151" }
+basic-toml = "0.1.10"
