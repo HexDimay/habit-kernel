@@ -1,5 +1,7 @@
+use super::traits::*;
 use super::*;
 use std::path::PathBuf;
+use uuid::Uuid;
 
 fn cfg() -> DataBaseConfig<PathBuf> {
     DataBaseConfig::new(PathBuf::from("/data"))
@@ -300,6 +302,7 @@ fn clear_current_is_idempotent() {
     let mut c = cfg();
     c.clear_current();
     c.clear_current();
+
     assert_eq!(c.current_db_id(), None);
 }
 
@@ -327,4 +330,143 @@ fn current_id_never_dangles_after_full_lifecycle() {
 
     c.remove_by_id(d).unwrap();
     assert_eq!(c.current_db_id(), None);
+}
+
+fn count_all<S: DbStore>(s: &S) -> usize {
+    s.len()
+}
+
+fn first_name<S: DbStore>(s: &S) -> Option<&str> {
+    s.databases().first().map(|e| e.name())
+}
+
+#[test]
+fn concrete_type_works_through_abstraction() {
+    let mut c: DataBaseConfig<PathBuf> = DataBaseConfig::new(PathBuf::from("/data"));
+    c.add("a", PathBuf::from("/a")).unwrap();
+    c.add("b", PathBuf::from("/b")).unwrap();
+
+    c.select_by_name("b").unwrap();
+
+    assert_eq!(count_all(&c), 2);
+    assert_eq!(first_name(&c), Some("a"));
+    assert_eq!(c.current_db().unwrap().name(), "b");
+}
+
+#[test]
+fn abstraction_preserves_rename() {
+    let mut c: DataBaseConfig<PathBuf> = DataBaseConfig::new(PathBuf::from("/data"));
+    let id = c.add("old", PathBuf::from("/a")).unwrap();
+
+    let entry = <DataBaseConfig<PathBuf> as DbStoreMut>::find_by_id_mut(&mut c, id).unwrap();
+    entry.set_name("new");
+
+    assert_eq!(c.find_by_id(id).unwrap().name(), "new");
+}
+
+// ---------------------------------------------------------------------
+// 2. Подставной тип — доказывает, что код на trait-bound не привязан
+//    к DataBaseConfig/CurrentDataBaseConfig.
+// ---------------------------------------------------------------------
+
+#[derive(Debug)]
+struct MockEntry {
+    id: Uuid,
+    name: String,
+    path: PathBuf,
+}
+
+impl DbEntry for MockEntry {
+    type Path = PathBuf;
+    fn id(&self) -> Uuid {
+        self.id
+    }
+
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    fn path_file(&self) -> &PathBuf {
+        &self.path
+    }
+}
+
+impl DbEntryMut for MockEntry {
+    fn set_name(&mut self, name: impl Into<String>) {
+        self.name = name.into();
+    }
+
+    fn set_path_file(&mut self, path: PathBuf) {
+        self.path = path;
+    }
+}
+
+#[derive(Debug)]
+struct MockStore {
+    path_dir: PathBuf,
+    entries: Vec<MockEntry>,
+    current: Option<Uuid>,
+}
+
+impl DbStore for MockStore {
+    type Path = PathBuf;
+    type Entry = MockEntry;
+
+    fn path_dir(&self) -> &PathBuf {
+        &self.path_dir
+    }
+
+    fn databases(&self) -> &[MockEntry] {
+        &self.entries
+    }
+
+    fn current_db_id(&self) -> Option<Uuid> {
+        self.current
+    }
+}
+
+#[test]
+fn generic_code_runs_over_mock_store() {
+    let id = Uuid::new_v4();
+    let mock = MockStore {
+        path_dir: PathBuf::from("/mock"),
+        entries: vec![MockEntry {
+            id,
+            name: "m".into(),
+            path: PathBuf::from("/m"),
+        }],
+        current: Some(id),
+    };
+
+    assert_eq!(count_all(&mock), 1);
+    assert_eq!(first_name(&mock), Some("m"));
+    assert_eq!(mock.current_db().unwrap().id(), id);
+}
+
+// ---------------------------------------------------------------------
+// 3. Provided-методы ведут себя одинаково для обоих типов.
+// ---------------------------------------------------------------------
+
+#[test]
+fn provided_finders_agree_across_impls() {
+    fn assert_finds<S: DbStore>(s: &S, id: Uuid, name: &str) {
+        assert_eq!(s.find_by_id(id).map(|e| e.name()), Some(name));
+        assert_eq!(s.find_by_name(name).map(|e| e.id()), Some(id));
+        assert!(s.find_by_name("nope").is_none());
+    }
+
+    let mut c: DataBaseConfig<PathBuf> = DataBaseConfig::new(PathBuf::from("/data"));
+    let id = c.add("x", PathBuf::from("/x")).unwrap();
+    assert_finds(&c, id, "x");
+
+    let mock = MockStore {
+        path_dir: PathBuf::from("/m"),
+        entries: vec![MockEntry {
+            id,
+            name: "x".into(),
+            path: PathBuf::from("/x"),
+        }],
+        current: None,
+    };
+    assert_finds(&mock, id, "x");
 }

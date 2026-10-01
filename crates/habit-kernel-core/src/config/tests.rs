@@ -1,8 +1,10 @@
 use super::*;
+use crate::config::db::traits::{DbEntry, DbEntryMut, DbStore, DbStoreMut};
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use uuid::Uuid;
 
 // ------------------------------------------------------------------
 // helpers (те же, что в тестах Config)
@@ -187,4 +189,146 @@ fn read_invalid_utf8_errors() {
         fs::write("bin", [0xff, 0xfe, 0x00]).unwrap();
         assert!(read_to_string("bin").is_err());
     });
+}
+
+#[test]
+fn database_accessors_see_same_instance() {
+    let mut cfg = Config::new();
+    cfg.database_mut()
+        .add("main", PathBuf::from("/db/main.db"))
+        .unwrap();
+
+    assert_eq!(cfg.database().len(), 1);
+    assert_eq!(cfg.database().find_by_name("main").unwrap().name(), "main");
+}
+
+#[test]
+fn new_has_empty_database_config() {
+    let cfg = Config::new();
+    assert!(cfg.database().is_empty());
+    assert_eq!(cfg.database().path_dir(), &PathBuf::from("./db"));
+}
+
+// ---------------------------------------------------------------------
+// Config как DbStore (только чтение)
+// ---------------------------------------------------------------------
+
+#[test]
+fn config_delegates_read_side_of_dbstore() {
+    let mut cfg = Config::new();
+    let a = cfg.add("a", PathBuf::from("/a")).unwrap();
+    let b = cfg.add("b", PathBuf::from("/b")).unwrap();
+    cfg.select_by_id(b).unwrap();
+
+    // Геттеры через трейт.
+    assert_eq!(DbStore::len(&cfg), 2);
+    assert!(!DbStore::is_empty(&cfg));
+    assert_eq!(DbStore::current_db_id(&cfg), Some(b));
+    assert_eq!(DbStore::current_db(&cfg).unwrap().id(), b);
+    assert_eq!(DbStore::find_by_name(&cfg, "a").unwrap().id(), a);
+
+    // Путь каталога тоже проходит через трейт.
+    assert_eq!(DbStore::path_dir(&cfg), &PathBuf::from("./db"));
+}
+
+#[test]
+fn config_finds_return_none_for_unknown() {
+    let cfg = Config::new();
+    assert!(DbStore::find_by_id(&cfg, Uuid::new_v4()).is_none());
+    assert!(DbStore::find_by_name(&cfg, "nope").is_none());
+    assert!(DbStore::current_db(&cfg).is_none());
+}
+
+// ---------------------------------------------------------------------
+// Config как DbStoreMut (запись)
+// ---------------------------------------------------------------------
+
+#[test]
+fn config_delegates_write_side_of_dbstoremut() {
+    let mut cfg = Config::new();
+
+    let id = cfg.add("main", PathBuf::from("/db/main.db")).unwrap();
+    assert_eq!(cfg.database().find_by_id(id).unwrap().name(), "main");
+
+    cfg.select_by_name("main").unwrap();
+    assert_eq!(DbStore::current_db_id(&cfg), Some(id));
+
+    cfg.remove_by_name("main").unwrap();
+    assert!(cfg.database().is_empty());
+    assert_eq!(DbStore::current_db_id(&cfg), None, "current не сброшен");
+}
+
+#[test]
+fn config_add_with_default_path_uses_inner_path_dir() {
+    let mut cfg = Config::new();
+    cfg.set_path_dir(PathBuf::from("/var/db"));
+
+    let id = cfg.add_with_default_path("main").unwrap();
+    assert_eq!(
+        cfg.database().find_by_id(id).unwrap().path_file(),
+        &PathBuf::from("/var/db/main.db"),
+    );
+}
+
+#[test]
+fn config_set_path_dir_does_not_touch_records() {
+    let mut cfg = Config::new();
+    let id = cfg.add("main", PathBuf::from("/db/main.db")).unwrap();
+
+    cfg.set_path_dir(PathBuf::from("/other"));
+
+    assert_eq!(
+        cfg.database().find_by_id(id).unwrap().path_file(),
+        &PathBuf::from("/db/main.db"),
+    );
+}
+
+#[test]
+fn config_find_mut_allows_edit() {
+    let mut cfg = Config::new();
+    let id = cfg.add("old", PathBuf::from("/a")).unwrap();
+
+    cfg.find_by_id_mut(id).unwrap().set_name("new");
+    assert_eq!(cfg.database().find_by_id(id).unwrap().name(), "new");
+}
+
+// ---------------------------------------------------------------------
+// Инвариант: current_db всегда указывает на существующую запись
+// ---------------------------------------------------------------------
+
+#[test]
+fn config_current_id_never_dangles() {
+    let mut cfg = Config::new();
+    let a = cfg.add("a", PathBuf::from("/a")).unwrap();
+    let b = cfg.add("b", PathBuf::from("/b")).unwrap();
+
+    cfg.select_by_id(b).unwrap();
+    cfg.remove_by_id(a).unwrap();
+    assert!(DbStore::find_by_id(&cfg, DbStore::current_db_id(&cfg).unwrap()).is_some());
+
+    cfg.remove_by_id(b).unwrap();
+    assert_eq!(DbStore::current_db_id(&cfg), None);
+}
+
+// ---------------------------------------------------------------------
+// Полиморфизм: одна и та же generic-функция работает и с DataBaseConfig,
+// и с Config.
+// ---------------------------------------------------------------------
+
+fn names<S: DbStore>(s: &S) -> Vec<String> {
+    s.databases().iter().map(|e| e.name().to_string()).collect()
+}
+
+#[test]
+fn same_generic_works_for_both_types() {
+    let mut inner: DataBaseConfig<PathBuf> = DataBaseConfig::new(PathBuf::from("/db"));
+    inner.add("a", PathBuf::from("/a")).unwrap();
+    inner.add("b", PathBuf::from("/b")).unwrap();
+
+    let mut cfg = Config::new();
+    cfg.add("a", PathBuf::from("/a")).unwrap();
+    cfg.add("b", PathBuf::from("/b")).unwrap();
+
+    assert_eq!(names(&inner), names(&cfg));
+    assert_eq!(names(&cfg), vec!["a".to_string(), "b".to_string()]);
 }
