@@ -1,5 +1,9 @@
 use chrono::NaiveDate;
-use habit_kernel_core::habit::{Habit, metadata::LimitationValue};
+use habit_kernel_core::habit::{
+    Habit,
+    metadata::LimitationValue,
+    traits::{DataContainer, HabitEntity},
+};
 
 #[derive(cli_table::Table)]
 pub struct TableHabit {
@@ -18,9 +22,9 @@ pub struct TableHabit {
 impl From<&Habit> for TableHabit {
     fn from(value: &Habit) -> Self {
         Self {
-            id: value.metadata().id(),
-            name: value.metadata().name().to_string(),
-            created: *value.metadata().created(),
+            id: value.id(),
+            name: value.name().to_string(),
+            created: *value.created(),
             limitation: value.metadata().limitation_value(),
             today_done: value.data().count_current_done(),
         }

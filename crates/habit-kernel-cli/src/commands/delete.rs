@@ -1,5 +1,8 @@
 use clap_derive::Args;
-use habit_kernel_core::db::DataBase;
+use habit_kernel_core::{
+    db::{DataBase, traits::QueryExecutor},
+    habit::traits::HabitEntity,
+};
 
 #[derive(Debug, Args)]
 pub struct DeleteArgs {
@@ -16,8 +19,8 @@ pub fn delete_habit(db: &mut DataBase, args: &DeleteArgs) {
     if let Some(habit) = db.del_by_id(*args.id()) {
         println!(
             "The habit was successfully removed. [ id: {}; name: {}; ]",
-            habit.metadata().id(),
-            habit.metadata().name()
+            habit.id(),
+            habit.name()
         );
 
         return;

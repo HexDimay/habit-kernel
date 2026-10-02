@@ -1,7 +1,10 @@
 use chrono::NaiveDate;
 use clap_derive::Args;
 use cli_table::{Style, Table, print_stdout};
-use habit_kernel_core::db::DataBase;
+use habit_kernel_core::{
+    db::{DataBase, traits::DataBaseMetadata},
+    habit::traits::{DataContainer, HabitEntity, ValueEntity},
+};
 
 #[derive(Debug, Args)]
 pub struct ChartArgs {

@@ -1,4 +1,4 @@
-use habit_kernel_core::db::DataBase;
+use habit_kernel_core::db::{DataBase, traits::DataBaseMetadata};
 
 use cli_table::{WithTitle, print_stdout};
 

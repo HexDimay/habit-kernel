@@ -9,10 +9,18 @@ use habit_kernel_cli::commands::{
     select::select_habit,
     view::{view_all_habits, view_selected_habit},
 };
-use habit_kernel_core::db::DataBase;
+use habit_kernel_core::{
+    db::DataBase,
+    io::{GetPath, Load, Save},
+};
 
 fn main() -> anyhow::Result<()> {
-    let mut db = DataBase::load()?.unwrap_or_else(|| DataBase::new());
+    let mut db = if std::fs::exists(<DataBase as GetPath<&'static str>>::get_path())? {
+        <DataBase as Load<&'static str>>::load::<DataBase>()?
+    } else {
+        DataBase::new()
+    };
+
     db.save()?;
 
     let cli = Cli::parse();

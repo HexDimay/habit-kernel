@@ -1,3 +1,5 @@
+use crate::habit::traits::Limitation;
+
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Hash)]
 pub struct Metadata {
     id: uuid::Uuid,
@@ -76,5 +78,46 @@ impl std::fmt::Display for LimitationValue {
             LimitationValue::Max(num) => format!("Max: {num}"),
         };
         write!(f, "{res}")
+    }
+}
+
+// ---------------------------------------------------------------------
+// Реализация трейта `Limitation`.
+//
+// `LimitationValue` моделирует только верхнюю границу (`Max`/`Unlimited`),
+// поэтому нижняя граница вырождена: `min` всегда 0, а задать её нельзя.
+// ---------------------------------------------------------------------
+impl Limitation<usize> for LimitationValue {
+    /// Нижняя граница не хранится, поэтому минимум всегда равен 0.
+    fn min(&self) -> usize {
+        0
+    }
+
+    /// Нижняя граница в `LimitationValue` не представима: установить можно
+    /// только 0. Для ненулевого значения подходящего состояния нет, поэтому
+    /// вызов игнорируется (см. `min`).
+    fn set_mut(&mut self, new_min: usize) {
+        debug_assert_eq!(
+            new_min, 0,
+            "LimitationValue задаёт только верхнюю границу (min всегда 0)"
+        );
+    }
+
+    /// Верхняя граница: значение `Max(n)` или `usize::MAX` для `Unlimited`
+    /// (последнее означает отсутствие эффективного потолка).
+    fn max(&self) -> usize {
+        match self {
+            LimitationValue::Max(n) => *n,
+            LimitationValue::Unlimited => usize::MAX,
+        }
+    }
+
+    fn set_max(&mut self, new_max: usize) {
+        *self = LimitationValue::Max(new_max);
+    }
+
+    /// `true` только для явно заданного потолка (`Max`).
+    fn is_lim(&self) -> bool {
+        matches!(self, LimitationValue::Max(_))
     }
 }

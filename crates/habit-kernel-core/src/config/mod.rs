@@ -95,10 +95,7 @@ impl DbStoreMut for Config {
     }
 
     fn databases_mut(&mut self) -> &mut [Self::Entry] {
-        // Inherent-метода с таким именем у DataBaseConfig нет — только
-        // трейтовый. Квалифицируем вызов, чтобы не полагаться на
-        // автовывод.
-        <DataBaseConfig<PathBuf> as DbStoreMut>::databases_mut(&mut self.database)
+        self.database.databases_mut()
     }
 
     fn add(&mut self, name: impl Into<String>, path_file: PathBuf) -> Result<Uuid, DbConfigError> {

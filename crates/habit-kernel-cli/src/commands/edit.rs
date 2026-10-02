@@ -1,5 +1,11 @@
 use clap_derive::Args;
-use habit_kernel_core::db::DataBase;
+use habit_kernel_core::{
+    db::{
+        DataBase,
+        traits::{DataBaseMetadata, DataBaseMetadataMut},
+    },
+    habit::traits::HabitEntity,
+};
 
 use crate::check_current_habit;
 
@@ -18,16 +24,12 @@ pub fn edit_habit(db: &mut DataBase, args: &EditArgs) {
     check_current_habit!(db);
 
     if let Some(name) = &args.name {
-        db.get_mut_current_habit()
-            .unwrap()
-            .mut_metadata()
-            .set_name(name);
+        db.get_mut_current_habit().unwrap().set_name(name);
     }
 
     if let Some(limitation) = &args.limitation {
         db.get_mut_current_habit()
             .unwrap()
-            .mut_metadata()
             .set_limitation_value(*limitation);
     }
 }

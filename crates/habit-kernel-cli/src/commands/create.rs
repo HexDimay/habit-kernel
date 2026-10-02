@@ -1,5 +1,5 @@
 use clap_derive::Args;
-use habit_kernel_core::db::DataBase;
+use habit_kernel_core::db::{DataBase, traits::QueryExecutor};
 
 #[derive(Debug, Args)]
 pub struct CreateArgs {
