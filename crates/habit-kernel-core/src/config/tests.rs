@@ -1,5 +1,5 @@
 use super::*;
-use crate::config::db::traits::{DbEntry, DbEntryMut, DbStore, DbStoreMut};
+use crate::config::db::traits::{DbEntry, DbStore, DbStoreMut};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;

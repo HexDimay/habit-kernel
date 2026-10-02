@@ -1,10 +1,8 @@
-use std::hash::Hash;
-
 use crate::habit::Habit;
 
 pub mod traits;
 
-#[derive(Debug, serde::Serialize, serde::Deserialize, Hash)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct DataBase {
     current_habit: Option<uuid::Uuid>,
     habit_list: Vec<Habit>,
