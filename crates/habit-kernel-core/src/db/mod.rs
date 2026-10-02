@@ -1,4 +1,12 @@
-use crate::habit::Habit;
+use crate::{
+    db::traits::{DataBaseMetadata, DataBaseMetadataMut, QueryExecutor},
+    habit::Habit,
+    io::{
+        GetPath, Load, Save,
+        atomic::{read_to_string, write_atomic},
+    },
+};
+use serde::de::DeserializeOwned;
 
 pub mod traits;
 
@@ -54,11 +62,7 @@ impl DataBase {
     }
 
     pub fn save(&self) -> anyhow::Result<()> {
-        let db = serde_json::to_string(self)?;
-
-        std::fs::write(Self::save_load_path(), db)?;
-
-        Ok(())
+        <Self as Save<&'static str>>::save(self)
     }
 
     pub fn load() -> anyhow::Result<Option<Self>> {
@@ -66,9 +70,7 @@ impl DataBase {
             return Ok(None);
         }
 
-        let s = std::fs::read_to_string(Self::save_load_path().to_owned())?;
-
-        Ok(Some(serde_json::from_str(&s)?))
+        Ok(Some(<Self as Load<&'static str>>::load::<Self>()?))
     }
 
     pub fn iter(&self) -> std::slice::Iter<'_, Habit> {
@@ -109,5 +111,102 @@ impl DataBase {
         }
 
         None
+    }
+}
+
+// ---------------------------------------------------------------------
+// Делегирование трейтовых операций во внутренние inherent-методы.
+//
+// Inherent-методы остаются публичным API (работают без импорта трейтов),
+// а impl'ы трейтов переадресуют в них. Вызовы внутри impl'ов
+// тип-квалифицированы (`DataBase::get_by_id(self, id)`), чтобы Rust
+// гарантированно выбрал inherent-метод, а не рекурсивно вернулся в трейт.
+// ---------------------------------------------------------------------
+impl DataBaseMetadata for DataBase {
+    fn get_current_habit(&self) -> Option<&Habit> {
+        DataBase::get_current_habit(self)
+    }
+
+    fn get_by_idx(&self, index: usize) -> Option<&Habit> {
+        DataBase::get_by_idx(self, index)
+    }
+
+    fn get_by_id(&self, id: uuid::Uuid) -> Option<&Habit> {
+        DataBase::get_by_id(self, id)
+    }
+
+    fn iter(&self) -> std::slice::Iter<'_, Habit> {
+        DataBase::iter(self)
+    }
+}
+
+impl DataBaseMetadataMut for DataBase {
+    fn get_mut_current_habit(&mut self) -> Option<&mut Habit> {
+        DataBase::get_mut_current_habit(self)
+    }
+
+    fn get_mut_by_idx(&mut self, index: usize) -> Option<&mut Habit> {
+        DataBase::get_mut_by_idx(self, index)
+    }
+
+    fn get_mut_by_id(&mut self, id: uuid::Uuid) -> Option<&mut Habit> {
+        DataBase::get_mut_by_id(self, id)
+    }
+
+    fn iter_mut(&mut self) -> std::slice::IterMut<'_, Habit> {
+        DataBase::iter_mut(self)
+    }
+}
+
+impl QueryExecutor<&'static str> for DataBase {
+    fn add_habit(&mut self, name: &str) {
+        DataBase::add_habit(self, name)
+    }
+
+    fn select_habit(&mut self, id: uuid::Uuid) {
+        DataBase::select_habit(self, id)
+    }
+
+    fn current_done(&mut self) {
+        DataBase::current_done(self)
+    }
+
+    fn del_by_id(&mut self, id: uuid::Uuid) {
+        // Inherent-версия возвращает удалённый `Habit`; трейтовая по
+        // контракту ничего не возвращает, поэтому результат отбрасываем.
+        let _ = DataBase::del_by_id(self, id);
+    }
+}
+
+// ---------------------------------------------------------------------
+// Файловый IO. `DataBase` сериализуется в JSON по пути `./db.json`;
+// запись идёт атомарно (см. `io::atomic`).
+// ---------------------------------------------------------------------
+impl GetPath<&'static str> for DataBase {
+    fn get_path() -> &'static str {
+        DataBase::save_load_path()
+    }
+}
+
+impl Save<&'static str> for DataBase {
+    fn save(&self) -> anyhow::Result<()> {
+        let path = <Self as GetPath<&'static str>>::get_path();
+        let db = serde_json::to_string(self)?;
+
+        write_atomic(path, &db)?;
+
+        Ok(())
+    }
+}
+
+impl Load<&'static str> for DataBase {
+    fn load<T>() -> anyhow::Result<T>
+    where
+        T: DeserializeOwned + GetPath<&'static str>,
+    {
+        let path = T::get_path();
+        let content = read_to_string(path)?;
+
+        Ok(serde_json::from_str(&content)?)
     }
 }
