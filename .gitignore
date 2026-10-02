@@ -1,2 +1,46 @@
+# Rust build artifacts
 /target
 /Cargo.lock
+
+# Local tools / AI editor config
+/.continue
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Editors / IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
+
+# Environment and local secrets
+.env
+.env.*
+!.env.example
+!.env.local.example
+
+# Temporary and cache files
+.cache/
+.tmp/
+*.tmp
+*.bak
+
+# Common generated/binary formats, if you do not want them in Git
+# Uncomment or keep only those that actually belong to your project:
+# *.pdf
+# *.docx
+# *.xlsx
+# *.pptx
+# *.zip
+# *.rar
+# *.7z
+# *.bin
+# *.db
+# *.sqlite
