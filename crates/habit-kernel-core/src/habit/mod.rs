@@ -8,8 +8,12 @@ use crate::habit::{
 #[macro_use]
 pub mod data;
 pub mod metadata;
+pub mod traits;
 
-#[derive(Debug, serde::Serialize, serde::Deserialize, Hash)]
+#[cfg(test)]
+pub mod tests;
+
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Habit {
     metadata: Metadata,
     data: Data,
@@ -21,10 +25,6 @@ impl Habit {
             metadata: Metadata::new(),
             data: Data::new(),
         }
-    }
-
-    pub fn update(&mut self) {
-        self.metadata.update_current_time();
     }
 
     pub fn increment(&mut self) {
